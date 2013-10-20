@@ -2,6 +2,7 @@
 
 import sys
 from PySide import QtGui, QtCore
+import serial
 
 
 
@@ -184,10 +185,12 @@ def cleanUp():
     QtCore.QCoreApplication.instance().quit()
 
 def baudToggled():
+    global serialPort
     buttons = ui.baudSelectGroupBox.findChildren(QtGui.QRadioButton)
     for button in buttons:
         if button.isChecked():
             print "Baud Rate: " + button.text()
+            serialPort.baudrate = int(button.text())
 
 def dataBitsToggled():
     buttons = ui.dataBitsGroupBox.findChildren(QtGui.QRadioButton)
@@ -229,15 +232,34 @@ class KeyPressEater(QtCore.QObject):
 
         return QtCore.QObject.eventFilter(self, obj, event)
 
+def serialPortConnected():
+    global connected
+    if connected == True:
+        connected = False
+        ui.connectButton.setText("Connect")
+    else:
+        connected = True
+        ui.connectButton.setText("Disconnect")
+
 
 def main():
     app = QtGui.QApplication(sys.argv)
     global ui
     ui = uiClass()
 
+    global serialPort
+
+    global connected
+    connected = False
+
+
+
+    serialPort = serial.Serial()
+
     keyFilter = KeyPressEater(ui)
 
     ui.quitButton.clicked.connect(cleanUp)
+    ui.connectButton.clicked.connect(serialPortConnected)
 
     connectRadioButtons(ui.baudSelectGroupBox, baudToggled)
     connectRadioButtons(ui.dataBitsGroupBox, dataBitsToggled)
