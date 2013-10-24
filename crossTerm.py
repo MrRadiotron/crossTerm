@@ -1,8 +1,9 @@
-#! /usr/local/bin/python
+#! /usr/bin/python
 
 import sys
 from PySide import QtGui, QtCore
 import serial
+import platform, glob
 
 
 
@@ -24,16 +25,14 @@ class uiClass(QtGui.QWidget):
 
         self.buttonFrame = QtGui.QFrame()
         self.buttonFrame.setMaximumSize(QtCore.QSize(16777215, 172))
-
+        self.buttonFrame.setMinimumSize(QtCore.QSize(111, 16777215))
         self.buttonVBox = QtGui.QVBoxLayout(self.buttonFrame)
         self.buttonVBox.addWidget(self.connectButton)
         self.buttonVBox.addWidget(self.reScanButton)
         self.buttonVBox.addWidget(self.helpButton)
         self.buttonVBox.addWidget(self.aboutButton)
         self.buttonVBox.addItem(self.buttonVBOXSpacer)
-        self.buttonVBox.addWidget(self.quitButton)
-
-        
+        self.buttonVBox.addWidget(self.quitButton)        
 
         self.portSelectCombo = QtGui.QComboBox()
         self.comSelectSpacer = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
@@ -161,6 +160,7 @@ class uiClass(QtGui.QWidget):
 
         self.receiveEdit = QtGui.QPlainTextEdit()
         self.receiveEdit.setReadOnly(True)
+        self.receiveEditCursor = QtGui.QTextCursor(self.receiveEdit.document())
         self.transmitEdit = QtGui.QPlainTextEdit()
 
         self.vboxSplitter = QtGui.QSplitter()
@@ -174,7 +174,7 @@ class uiClass(QtGui.QWidget):
 
         self.setLayout(self.mainVBox)
 
-        self.setWindowTitle('crossTermTest1')
+        self.setWindowTitle('crossTerm')
         self.show()
 
     def closeEvent(self, event):
@@ -182,6 +182,9 @@ class uiClass(QtGui.QWidget):
         cleanUp()
 
 def cleanUp():
+    global connected
+    if connected:
+        serialPort.close()
     QtCore.QCoreApplication.instance().quit()
 
 def baudToggled():
@@ -190,25 +193,52 @@ def baudToggled():
     for button in buttons:
         if button.isChecked():
             print "Baud Rate: " + button.text()
-            serialPort.baudrate = int(button.text())
+            serialSettings.baud = int(button.text())
 
 def dataBitsToggled():
+    global serialPort
     buttons = ui.dataBitsGroupBox.findChildren(QtGui.QRadioButton)
     for button in buttons:
         if button.isChecked():
             print "Data Bits: " + button.text()
+            if button.text() == '5':
+                serialSettings.byteSize = serial.FIVEBITS
+            elif button.text() == '6':
+                serialSettings.byteSize = serial.SIXBITS
+            elif button.text() == '7':
+                serialSettings.byteSize = serial.SEVENBITS
+            elif button.text() == '8':
+                serialSettings.byteSize = serial.EIGHTBITS
 
 def parityToggled():
+    global serialPort
     buttons = ui.parityGroupBox.findChildren(QtGui.QRadioButton)
     for button in buttons:
         if button.isChecked():
             print "Parity: " + button.text()
+            if button.text() == 'none':
+                serialSettings.parity = serial.PARITY_NONE
+            if button.text() == 'even':
+                serialSettings.parity = serial.PARITY_EVEN
+            if button.text() == 'odd':
+                serialSettings.parity = serial.PARITY_ODD
+            if button.text() == 'mark':
+                serialSettings.parity = serial.PARITY_MARK
+            if button.text() == 'space':
+                serialSettings.parity = serial.PARITY_SPACE
 
 def stopBitsToggled():
+    global serialPort
     buttons = ui.stopBitsGroupBox.findChildren(QtGui.QRadioButton)
     for button in buttons:
         if button.isChecked():
             print "Stop Bits: " + button.text()
+            if button.text() == '1':
+                serialSettings.stopBits = serial.STOPBITS_ONE
+            if button.text() == '1.5':
+                serialSettings.stopBits = serial.STOPBITS_ONE_POINT_FIVE
+            if button.text() == '2':
+                serialSettings.stopBits = serial.STOPBITS_TWO
 
 def handShakingToggled():
     buttons = ui.handshakingGroupBox.findChildren(QtGui.QRadioButton)
@@ -229,17 +259,84 @@ class KeyPressEater(QtCore.QObject):
                 #send serial here
                 print "Key Press: " , ch
                 print "Key Length:" , len(ch)
+                if connected == True:
+                    serialPort.write(ch)
 
         return QtCore.QObject.eventFilter(self, obj, event)
 
 def serialPortConnected():
+    global serialPort
     global connected
     if connected == True:
+        serialPort.close()
         connected = False
         ui.connectButton.setText("Connect")
+        ui.comSelectGroupBox.setDisabled(False)
+        ui.baudSelectGroupBox.setDisabled(False)
+        ui.dataBitsGroupBox.setDisabled(False)
+        ui.parityGroupBox.setDisabled(False)
+        ui.stopBitsGroupBox.setDisabled(False)
+        ui.handshakingGroupBox.setDisabled(True)
+
     else:
+        serialSettings.port = ui.portSelectCombo.currentText()
+        print "opening serial port: ", serialSettings.port
+        serialPort = serial.Serial(serialSettings.port, serialSettings.baud, serialSettings.byteSize, serialSettings.parity, serialSettings.stopBits, serialSettings.time, xonxoff=False, rtscts=False, writeTimeout=None, dsrdtr=False, interCharTimeout=None)
         connected = True
         ui.connectButton.setText("Disconnect")
+        ui.comSelectGroupBox.setDisabled(True)
+        ui.baudSelectGroupBox.setDisabled(True)
+        ui.dataBitsGroupBox.setDisabled(True)
+        ui.parityGroupBox.setDisabled(True)
+        ui.stopBitsGroupBox.setDisabled(True)
+        ui.handshakingGroupBox.setDisabled(True)
+
+class serialSettingsClass():
+    baud = None
+    byteSize = None
+    parity = None
+    stopBits = None
+    time = 0
+    port = None
+
+def list_serial_ports():
+    system_name = platform.system()
+    if system_name == "Windows":
+        # Scan for available ports.
+        available = []
+        for i in range(256):
+            try:
+                s = serial.Serial(i)
+                available.append(i)
+                s.close()
+            except serial.SerialException:
+                pass
+        return available
+    elif system_name == "Darwin":
+        # Mac
+        return glob.glob('/dev/tty*') + glob.glob('/dev/cu*')
+    else:
+        # Assume Linux or something else
+        return glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*')
+
+def scan():
+    ports = list_serial_ports()
+    print ports
+    for x in range(0, ui.portSelectCombo.count()):
+        ui.portSelectCombo.removeItem(0)
+    for i in ports:
+        ui.portSelectCombo.addItem(i)
+
+def receivePort():
+    global connected
+    global serialPort
+    #print "timer"
+    if connected:
+        ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
+        ui.receiveEditCursor.insertText(serialPort.read())
+        ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
+        ui.receiveEdit.setTextCursor(ui.receiveEditCursor)
+        #ui.receiveEdit.appendPlainText(serialPort.read())
 
 
 def main():
@@ -252,14 +349,16 @@ def main():
     global connected
     connected = False
 
-
-
-    serialPort = serial.Serial()
+    global serialSettings
+    serialSettings = serialSettingsClass()
 
     keyFilter = KeyPressEater(ui)
 
     ui.quitButton.clicked.connect(cleanUp)
     ui.connectButton.clicked.connect(serialPortConnected)
+    ui.reScanButton.clicked.connect(scan)
+    scan()
+    #ui.portSelectCombo.activated[str].connect()
 
     connectRadioButtons(ui.baudSelectGroupBox, baudToggled)
     connectRadioButtons(ui.dataBitsGroupBox, dataBitsToggled)
@@ -279,6 +378,13 @@ def main():
     handShakingToggled()
 
     ui.transmitEdit.installEventFilter(keyFilter)
+    ui.handshakingGroupBox.setDisabled(True)
+    ui.stopBits1_5.setDisabled(True)
+    ui.baudCustomRadio.setDisabled(True)
+
+    timer = QtCore.QTimer()
+    timer.timeout.connect(receivePort)
+    timer.start(1)
 
     sys.exit(app.exec_())
 
