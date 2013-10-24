@@ -1,1 +1,4 @@
 crossTerm is a simple cross platform serial terminal inspired by Bray's terminal.
+
+Requires pyside and pyserial.
+Pyserial should be included with most python installs. 
