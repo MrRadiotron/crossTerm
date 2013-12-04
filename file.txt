@@ -217,9 +217,8 @@ def cleanUp():
     global connected
     if connected:
         serialPort.close()
-    fRunner.fd.close()
     QtCore.QCoreApplication.instance().quit()
-    
+    fd.close()
 
 def baudToggled():
     global serialPort
@@ -382,36 +381,36 @@ def fileDialog():
     (fName,none) = QtGui.QFileDialog.getOpenFileName(ui, 'Open File', '/home')
     ui.fileEdit.setText(fName)
 
-class fileRunner:
-    def fileController(self):
-        global clickedFlag
-        fName = ui.fileEdit.text()
-        ui.fileEdit.setDisabled(True)
-        ui.chooseFile.setDisabled(True)
-        ui.byteDelaySpinBox.setDisabled(True)
-        if ui.lineByLine.checkState() and clickedFlag == False:
-            clickedFlag = True
-            ui.fileControl.setText('Next Line')
-            ui.fileControl.clicked.Disconnect()
-            ui.fileControl.clicked.connect(self.nextLine)
-        self.fd = open(fName, 'rU')
+def fileController():
+    global fd
+    fName = ui.fileEdit.text()
+    ui.fileEdit.setDisabled(True)
+    ui.chooseFile.setDisabled(True)
+    ui.byteDelaySpinBox.setDisabled(True)
+    if ui.lineByLine.isChecked:
+        ui.fileControl.setText('Next Line')
+        ui.fileControl.clicked.connect(nextLine)
+    fd = open(fName, 'r')
 
-    def nextLine(self):
-        lineText = self.fd.readline()
-        print lineText
+def nextLine():
+    global fd
+    lineText = fd.readline()
+    print lineText
 
-        #serialPort.write(lineText)
-        ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
-        ui.transmitEditCursor.insertText(lineText)
-        ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
-        ui.transmitEdit.setTextCursor(ui.transmitEditCursor)
+    #serialPort.write(lineText)
+    ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
+    ui.transmitEditCursor.insertText(lineText)
+    ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
+    ui.transmitEdit.setTextCursor(ui.transmitEditCursor)
 
 
 def lineByLineChange():
     if ui.lineByLine.checkState():
         ui.byteDelaySpinBox.setValue(0)
         ui.byteDelaySpinBox.setDisabled(True)
+        print "here"
     else:
+        print "now here"
         ui.byteDelaySpinBox.setValue(0)
         ui.byteDelaySpinBox.setDisabled(False)
 
@@ -420,12 +419,9 @@ def main():
     app = QtGui.QApplication(sys.argv)
     global ui
     ui = uiClass()
-    global fRunner
-    global clickedFlag
-    clickedFlag = False
-    fRunner = fileRunner()
 
     global serialPort
+    global fd
 
     global connected
     connected = False
@@ -439,7 +435,7 @@ def main():
     ui.connectButton.clicked.connect(serialPortConnected)
     ui.reScanButton.clicked.connect(scan)
     ui.chooseFile.clicked.connect(fileDialog)
-    ui.fileControl.clicked.connect(fRunner.fileController)
+    ui.fileControl.clicked.connect(fileController)
     ui.lineByLine.stateChanged.connect(lineByLineChange)
     scan()
     #ui.portSelectCombo.activated[str].connect()
