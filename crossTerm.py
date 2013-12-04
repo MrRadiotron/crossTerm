@@ -43,6 +43,7 @@ class uiClass(QtGui.QWidget):
 
         self.comSelectGroupBox = QtGui.QGroupBox()
         self.comSelectGroupBox.setMaximumSize(QtCore.QSize(16777215, 172))
+        self.comSelectGroupBox.setMinimumSize(QtCore.QSize(150, 16777215))
         self.comSelectGroupBox.setLayout(self.comSelectVBox)
         self.comSelectGroupBox.setTitle('COM Port')
 
@@ -162,15 +163,46 @@ class uiClass(QtGui.QWidget):
         self.receiveEdit.setReadOnly(True)
         self.receiveEditCursor = QtGui.QTextCursor(self.receiveEdit.document())
         self.transmitEdit = QtGui.QPlainTextEdit()
+        self.transmitEditCursor = QtGui.QTextCursor(self.transmitEdit.document())
 
         self.vboxSplitter = QtGui.QSplitter()
         self.vboxSplitter.setOrientation(QtCore.Qt.Vertical)
         self.vboxSplitter.addWidget(self.receiveEdit)
         self.vboxSplitter.addWidget(self.transmitEdit)
 
+
+        self.fileEdit = QtGui.QLineEdit()        
+        self.chooseFile = QtGui.QPushButton()        
+        self.sendFileLayoutSpacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.byteDelayLabel = QtGui.QLabel()        
+        self.byteDelaySpinBox = QtGui.QSpinBox()        
+        self.lineByLine = QtGui.QCheckBox()        
+        self.fileControl = QtGui.QPushButton()    
+
+        self.chooseFile.setText('Choose File')
+        self.byteDelayLabel.setText('Byte Delay(ms):')
+        self.lineByLine.setText('Line by Line')
+        self.fileControl.setText('Start')   
+
+        self.sendFileFrame = QtGui.QWidget()
+        self.sendFileLayout = QtGui.QHBoxLayout(self.sendFileFrame)
+        self.sendFileLayout.setSpacing(9)
+        self.sendFileLayout.setSizeConstraint(QtGui.QLayout.SetDefaultConstraint)
+        self.sendFileLayout.setContentsMargins(0, 0, 0, 0)
+        self.sendFileLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.sendFileLayout.addWidget(self.fileEdit)
+        self.sendFileLayout.addWidget(self.chooseFile)
+        self.sendFileLayout.addItem(self.sendFileLayoutSpacer)
+        self.sendFileLayout.addWidget(self.byteDelayLabel)
+        self.sendFileLayout.addWidget(self.byteDelaySpinBox)
+        self.sendFileLayout.addWidget(self.lineByLine)
+        self.sendFileLayout.addWidget(self.fileControl)
+
         self.mainVBox = QtGui.QVBoxLayout()
         self.mainVBox.addLayout(self.topHBox)
         self.mainVBox.addWidget(self.vboxSplitter)
+        self.mainVBox.addWidget(self.sendFileFrame)
 
         self.setLayout(self.mainVBox)
 
@@ -185,7 +217,9 @@ def cleanUp():
     global connected
     if connected:
         serialPort.close()
+    fRunner.fd.close()
     QtCore.QCoreApplication.instance().quit()
+    
 
 def baudToggled():
     global serialPort
@@ -277,6 +311,9 @@ def serialPortConnected():
         ui.parityGroupBox.setDisabled(False)
         ui.stopBitsGroupBox.setDisabled(False)
         ui.handshakingGroupBox.setDisabled(True)
+        ui.fileControl.setDisabled(False)
+        ui.lineByLine.setDisabled(False)
+        ui.byteDelaySpinBox.setDisabled(False)
 
     else:
         serialSettings.port = ui.portSelectCombo.currentText()
@@ -290,6 +327,9 @@ def serialPortConnected():
         ui.parityGroupBox.setDisabled(True)
         ui.stopBitsGroupBox.setDisabled(True)
         ui.handshakingGroupBox.setDisabled(True)
+        ui.fileControl.setDisabled(True)
+        ui.lineByLine.setDisabled(True)
+        ui.byteDelaySpinBox.setDisabled(True)
 
 class serialSettingsClass():
     baud = None
@@ -338,11 +378,47 @@ def receivePort():
         ui.receiveEdit.setTextCursor(ui.receiveEditCursor)
         #ui.receiveEdit.appendPlainText(serialPort.read())
 
+def fileDialog():
+    (fName,none) = QtGui.QFileDialog.getOpenFileName(ui, 'Open File', '/home')
+    ui.fileEdit.setText(fName)
+
+class fileRunner:
+    def fileController(self):
+        fName = ui.fileEdit.text()
+        ui.fileEdit.setDisabled(True)
+        ui.chooseFile.setDisabled(True)
+        ui.byteDelaySpinBox.setDisabled(True)
+        if ui.lineByLine.isChecked:
+            ui.fileControl.setText('Next Line')
+            ui.fileControl.clicked.connect(self.nextLine)
+        self.fd = open(fName, 'rU')
+
+    def nextLine(self):
+        lineText = self.fd.readline()
+        print lineText
+
+        #serialPort.write(lineText)
+        ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
+        ui.transmitEditCursor.insertText(lineText)
+        ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
+        ui.transmitEdit.setTextCursor(ui.transmitEditCursor)
+
+
+def lineByLineChange():
+    if ui.lineByLine.checkState():
+        ui.byteDelaySpinBox.setValue(0)
+        ui.byteDelaySpinBox.setDisabled(True)
+    else:
+        ui.byteDelaySpinBox.setValue(0)
+        ui.byteDelaySpinBox.setDisabled(False)
+
 
 def main():
     app = QtGui.QApplication(sys.argv)
     global ui
     ui = uiClass()
+    global fRunner
+    fRunner = fileRunner()
 
     global serialPort
 
@@ -357,6 +433,9 @@ def main():
     ui.quitButton.clicked.connect(cleanUp)
     ui.connectButton.clicked.connect(serialPortConnected)
     ui.reScanButton.clicked.connect(scan)
+    ui.chooseFile.clicked.connect(fileDialog)
+    ui.fileControl.clicked.connect(fRunner.fileController)
+    ui.lineByLine.stateChanged.connect(lineByLineChange)
     scan()
     #ui.portSelectCombo.activated[str].connect()
 
