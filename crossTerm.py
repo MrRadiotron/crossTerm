@@ -384,12 +384,15 @@ def fileDialog():
 
 class fileRunner:
     def fileController(self):
+        global clickedFlag
         fName = ui.fileEdit.text()
         ui.fileEdit.setDisabled(True)
         ui.chooseFile.setDisabled(True)
         ui.byteDelaySpinBox.setDisabled(True)
-        if ui.lineByLine.isChecked:
+        if ui.lineByLine.checkState() and clickedFlag == False:
+            clickedFlag = True
             ui.fileControl.setText('Next Line')
+            ui.fileControl.clicked.Disconnect()
             ui.fileControl.clicked.connect(self.nextLine)
         self.fd = open(fName, 'rU')
 
@@ -418,6 +421,8 @@ def main():
     global ui
     ui = uiClass()
     global fRunner
+    global clickedFlag
+    clickedFlag = False
     fRunner = fileRunner()
 
     global serialPort
