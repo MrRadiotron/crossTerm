@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import sys
+import sys, os
 from PySide import QtGui, QtCore
 import serial
 import platform, glob
@@ -170,7 +170,6 @@ class uiClass(QtGui.QWidget):
         self.vboxSplitter.addWidget(self.receiveEdit)
         self.vboxSplitter.addWidget(self.transmitEdit)
 
-
         self.fileEdit = QtGui.QLineEdit()        
         self.chooseFile = QtGui.QPushButton()        
         self.sendFileLayoutSpacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
@@ -179,10 +178,14 @@ class uiClass(QtGui.QWidget):
         self.lineByLine = QtGui.QCheckBox()        
         self.fileControl = QtGui.QPushButton()    
 
+
         self.chooseFile.setText('Choose File')
         self.byteDelayLabel.setText('Byte Delay(ms):')
         self.lineByLine.setText('Line by Line')
         self.fileControl.setText('Start')   
+        self.byteDelaySpinBox.setValue(10)
+        self.byteDelaySpinBox.setMaximum(10000)
+
 
         self.sendFileFrame = QtGui.QWidget()
         self.sendFileLayout = QtGui.QHBoxLayout(self.sendFileFrame)
@@ -194,6 +197,7 @@ class uiClass(QtGui.QWidget):
         self.sendFileLayout.addWidget(self.fileEdit)
         self.sendFileLayout.addWidget(self.chooseFile)
         self.sendFileLayout.addItem(self.sendFileLayoutSpacer)
+
         self.sendFileLayout.addWidget(self.byteDelayLabel)
         self.sendFileLayout.addWidget(self.byteDelaySpinBox)
         self.sendFileLayout.addWidget(self.lineByLine)
@@ -217,7 +221,8 @@ def cleanUp():
     global connected
     if connected:
         serialPort.close()
-    fRunner.fd.close()
+    if fRunner.fd != None:
+        fRunner.fd.close()
     QtCore.QCoreApplication.instance().quit()
     
 
@@ -303,6 +308,7 @@ def serialPortConnected():
     global connected
     if connected == True:
         serialPort.close()
+        fRunner.timer.stop()
         connected = False
         ui.connectButton.setText("Connect")
         ui.comSelectGroupBox.setDisabled(False)
@@ -311,7 +317,7 @@ def serialPortConnected():
         ui.parityGroupBox.setDisabled(False)
         ui.stopBitsGroupBox.setDisabled(False)
         ui.handshakingGroupBox.setDisabled(True)
-        ui.fileControl.setDisabled(False)
+        ui.fileControl.setDisabled(True)
         ui.lineByLine.setDisabled(False)
         ui.byteDelaySpinBox.setDisabled(False)
 
@@ -327,9 +333,9 @@ def serialPortConnected():
         ui.parityGroupBox.setDisabled(True)
         ui.stopBitsGroupBox.setDisabled(True)
         ui.handshakingGroupBox.setDisabled(True)
-        ui.fileControl.setDisabled(True)
-        ui.lineByLine.setDisabled(True)
-        ui.byteDelaySpinBox.setDisabled(True)
+        ui.fileControl.setDisabled(False)
+        ui.lineByLine.setDisabled(False)
+        ui.byteDelaySpinBox.setDisabled(False)
 
 class serialSettingsClass():
     baud = None
@@ -360,51 +366,112 @@ def list_serial_ports():
         return glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*')
 
 def scan():
+    system_name = platform.system()
     ports = list_serial_ports()
     print ports
     for x in range(0, ui.portSelectCombo.count()):
         ui.portSelectCombo.removeItem(0)
     for i in ports:
-        ui.portSelectCombo.addItem(i)
+        if system_name == "Windows":
+            ui.portSelectCombo.addItem("COM"+ str(i+1))
+        else:
+            ui.portSelectCombo.addItem(i)
 
 def receivePort():
     global connected
     global serialPort
     #print "timer"
     if connected:
-        ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
-        ui.receiveEditCursor.insertText(serialPort.read())
-        ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
-        ui.receiveEdit.setTextCursor(ui.receiveEditCursor)
-        #ui.receiveEdit.appendPlainText(serialPort.read())
+        text = serialPort.read()
+        if text != '':
+            ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
+            ui.receiveEditCursor.insertText(text)
+            ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
+            ui.receiveEdit.setTextCursor(ui.receiveEditCursor)
+            #ui.receiveEdit.appendPlainText(serialPort.read())
 
 def fileDialog():
-    (fName,none) = QtGui.QFileDialog.getOpenFileName(ui, 'Open File', '/home')
+    system_name = platform.system()
+    if system_name == "Windows":
+        pathName = os.getenv("UserProfile")
+        print pathName
+        #pathName = "%UserProfile%"
+    else:
+        pathName = '$HOME'
+    (fName,none) = QtGui.QFileDialog.getOpenFileName(ui, 'Open File', pathName)
     ui.fileEdit.setText(fName)
 
 class fileRunner:
+    def __init__(self):
+        self.fd = None
+        self.state = 'idle'
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.nextChar)
+
     def fileController(self):
-        global clickedFlag
-        fName = ui.fileEdit.text()
-        ui.fileEdit.setDisabled(True)
-        ui.chooseFile.setDisabled(True)
-        ui.byteDelaySpinBox.setDisabled(True)
-        if ui.lineByLine.checkState() and clickedFlag == False:
-            clickedFlag = True
-            ui.fileControl.setText('Next Line')
-            ui.fileControl.clicked.Disconnect()
-            ui.fileControl.clicked.connect(self.nextLine)
-        self.fd = open(fName, 'rU')
+        if self.state == 'idle':
+            fName = ui.fileEdit.text()
+            ui.fileEdit.setDisabled(True)
+            ui.chooseFile.setDisabled(True)
+            ui.byteDelaySpinBox.setDisabled(True)
+            self.fd = open(fName, 'rU')
+            if ui.lineByLine.checkState():
+                self.state = 'nextLine'
+                ui.fileControl.setText('Next Line')
+                ui.lineByLine.setDisabled(True)
+            else:
+                self.state = 'run'
+                ui.fileControl.setText('Pause')
+                ui.lineByLine.setDisabled(True)
+                self.timer.start(ui.byteDelaySpinBox.value())
+
+        elif self.state == 'nextLine':
+            self.nextLine()
+        elif self.state == 'run':
+            ui.byteDelaySpinBox.setDisabled(False)
+            self.state = 'pause'
+            self.timer.stop()
+            ui.fileControl.setText('Run')
+        elif self.state == 'pause':
+            self.state = 'run'
+            ui.byteDelaySpinBox.setDisabled(True)
+            self.timer.start(ui.byteDelaySpinBox.value())
+            ui.fileControl.setText('Pause')
+
+    def nextChar(self):
+        ch = self.fd.read(1)
+        if ch == '':
+            self.fd.close()
+            self.state = 'idle'
+            ui.fileControl.setText('Start')
+            ui.fileEdit.setDisabled(False)
+            ui.chooseFile.setDisabled(False)
+            ui.byteDelaySpinBox.setDisabled(False)
+            ui.lineByLine.setDisabled(False)
+            self.timer.stop()
+        else:
+            serialPort.write(ch)
+            ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
+            ui.transmitEditCursor.insertText(ch)
+            ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
+            ui.transmitEdit.setTextCursor(ui.transmitEditCursor)
 
     def nextLine(self):
         lineText = self.fd.readline()
-        print lineText
-
-        #serialPort.write(lineText)
-        ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
-        ui.transmitEditCursor.insertText(lineText)
-        ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
-        ui.transmitEdit.setTextCursor(ui.transmitEditCursor)
+        if lineText == '':
+            self.fd.close()
+            self.state = 'idle'
+            ui.fileControl.setText('Start')
+            ui.fileEdit.setDisabled(False)
+            ui.chooseFile.setDisabled(False)
+            ui.byteDelaySpinBox.setDisabled(True)
+            ui.lineByLine.setDisabled(False)
+        else:
+            serialPort.write(lineText)
+            ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
+            ui.transmitEditCursor.insertText(lineText)
+            ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
+            ui.transmitEdit.setTextCursor(ui.transmitEditCursor)
 
 
 def lineByLineChange():
@@ -412,7 +479,7 @@ def lineByLineChange():
         ui.byteDelaySpinBox.setValue(0)
         ui.byteDelaySpinBox.setDisabled(True)
     else:
-        ui.byteDelaySpinBox.setValue(0)
+        ui.byteDelaySpinBox.setValue(10)
         ui.byteDelaySpinBox.setDisabled(False)
 
 
@@ -421,8 +488,6 @@ def main():
     global ui
     ui = uiClass()
     global fRunner
-    global clickedFlag
-    clickedFlag = False
     fRunner = fileRunner()
 
     global serialPort
@@ -465,6 +530,7 @@ def main():
     ui.handshakingGroupBox.setDisabled(True)
     ui.stopBits1_5.setDisabled(True)
     ui.baudCustomRadio.setDisabled(True)
+    ui.fileControl.setDisabled(True)
 
     timer = QtCore.QTimer()
     timer.timeout.connect(receivePort)
