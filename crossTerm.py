@@ -360,7 +360,7 @@ def list_serial_ports():
         return available
     elif system_name == "Darwin":
         # Mac
-        return glob.glob('/dev/tty*') + glob.glob('/dev/cu*')
+        return glob.glob('/dev/tty.*') + glob.glob('/dev/cu.*')
     else:
         # Assume Linux or something else
         return glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*')
