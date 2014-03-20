@@ -7,27 +7,48 @@
     <x>0</x>
     <y>0</y>
     <width>1065</width>
-    <height>477</height>
+    <height>516</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2">
+  <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1,0">
    <property name="spacing">
     <number>2</number>
    </property>
-   <property name="margin">
+   <property name="leftMargin">
     <number>2</number>
+   </property>
+   <property name="topMargin">
+    <number>2</number>
+   </property>
+   <property name="rightMargin">
+    <number>2</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
    </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>2</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
      <item>
       <widget class="QFrame" name="verticalFrame">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>172</height>
+         <height>140</height>
         </size>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
@@ -102,7 +123,7 @@
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>172</height>
+         <height>140</height>
         </size>
        </property>
        <property name="styleSheet">
@@ -139,6 +160,12 @@
      </item>
      <item>
       <widget class="QGroupBox" name="BAUD_RATE">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>140</height>
+        </size>
+       </property>
        <property name="title">
         <string>Baud Rate</string>
        </property>
@@ -147,7 +174,7 @@
          <number>0</number>
         </property>
         <property name="spacing">
-         <number>2</number>
+         <number>0</number>
         </property>
         <item row="1" column="1">
          <widget class="QRadioButton" name="BAUD_19200">
@@ -259,6 +286,12 @@
      </item>
      <item>
       <widget class="QGroupBox" name="DATA_BITS">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>140</height>
+        </size>
+       </property>
        <property name="title">
         <string>Data Bits</string>
        </property>
@@ -267,7 +300,7 @@
          <number>0</number>
         </property>
         <property name="spacing">
-         <number>2</number>
+         <number>0</number>
         </property>
         <item row="1" column="0">
          <widget class="QRadioButton" name="DATA_BITS_6">
@@ -302,6 +335,12 @@
      </item>
      <item>
       <widget class="QGroupBox" name="PARITY">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>140</height>
+        </size>
+       </property>
        <property name="title">
         <string>Parity</string>
        </property>
@@ -310,7 +349,7 @@
          <number>0</number>
         </property>
         <property name="spacing">
-         <number>2</number>
+         <number>0</number>
         </property>
         <item row="2" column="0">
          <widget class="QRadioButton" name="PARITY_EVEN">
@@ -352,12 +391,18 @@
      </item>
      <item>
       <widget class="QGroupBox" name="STOP_BITS">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>140</height>
+        </size>
+       </property>
        <property name="title">
         <string>Stop Bits</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <property name="spacing">
-         <number>2</number>
+         <number>0</number>
         </property>
         <property name="margin">
          <number>0</number>
@@ -388,15 +433,21 @@
      </item>
      <item>
       <widget class="QGroupBox" name="HANDSHAKING">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>140</height>
+        </size>
+       </property>
        <property name="title">
         <string>Handshaking</string>
        </property>
        <property name="flat">
         <bool>false</bool>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout_5">
+       <layout class="QVBoxLayout" name="verticalLayout_5" stretch="1,1,1,1,0">
         <property name="spacing">
-         <number>2</number>
+         <number>0</number>
         </property>
         <property name="margin">
          <number>0</number>
@@ -431,6 +482,9 @@
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <property name="spacing">
+           <number>0</number>
+          </property>
           <item>
            <widget class="QRadioButton" name="HANDSHAKING_RTS_ON_TX">
             <property name="text">
@@ -466,48 +520,114 @@
     </layout>
    </item>
    <item>
-    <widget class="QSplitter" name="splitter">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <widget class="QPlainTextEdit" name="RECEIVE_EDIT">
-      <property name="font">
-       <font>
-        <family>Ubuntu Mono</family>
-       </font>
+    <widget class="QWidget" name="widget_2" native="true">
+     <layout class="QVBoxLayout" name="verticalLayout_6">
+      <property name="spacing">
+       <number>0</number>
       </property>
-      <property name="lineWrapMode">
-       <enum>QPlainTextEdit::NoWrap</enum>
+      <property name="margin">
+       <number>0</number>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-      <property name="plainText">
-       <string notr="true"/>
-      </property>
-     </widget>
-     <widget class="QPlainTextEdit" name="TRANSMIT_EDIT">
-      <property name="font">
-       <font>
-        <family>Ubuntu Mono</family>
-        <weight>50</weight>
-        <italic>false</italic>
-        <bold>false</bold>
-       </font>
-      </property>
-      <property name="lineWrapMode">
-       <enum>QPlainTextEdit::NoWrap</enum>
-      </property>
-     </widget>
+      <item>
+       <widget class="QSplitter" name="splitter_2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <widget class="QWidget" name="widget" native="true">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>25</height>
+          </size>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="margin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QCheckBox" name="checkBox">
+            <property name="text">
+             <string>CheckBox</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QPlainTextEdit" name="RECEIVE_EDIT">
+         <property name="font">
+          <font>
+           <family>Ubuntu Mono</family>
+          </font>
+         </property>
+         <property name="lineWrapMode">
+          <enum>QPlainTextEdit::NoWrap</enum>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="plainText">
+          <string notr="true"/>
+         </property>
+        </widget>
+        <widget class="QSplitter" name="splitter">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <widget class="QWidget" name="widget_3" native="true">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>18</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>18</height>
+           </size>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="margin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QCheckBox" name="checkBox_2">
+             <property name="text">
+              <string>CheckBox</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPlainTextEdit" name="TRANSMIT_EDIT">
+          <property name="font">
+           <font>
+            <family>Ubuntu Mono</family>
+            <weight>50</weight>
+            <italic>false</italic>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="lineWrapMode">
+           <enum>QPlainTextEdit::NoWrap</enum>
+          </property>
+         </widget>
+        </widget>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>
