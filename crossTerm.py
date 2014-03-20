@@ -1,221 +1,15 @@
 #! /usr/bin/python
 
 import sys, os
-from PySide import QtGui, QtCore
+from PySide import QtCore, QtGui, QtUiTools
 import serial
 import platform, glob
 
 
 
-class uiClass(QtGui.QWidget):
-
-    def __init__(self):
-        super(uiClass, self).__init__()
-
-        self.initUI()
-
-    def initUI(self):
-
-        self.connectButton = QtGui.QPushButton("Connect")
-        self.reScanButton = QtGui.QPushButton("ReScan")
-        self.helpButton = QtGui.QPushButton("Help")
-        self.aboutButton = QtGui.QPushButton("About")
-        self.buttonVBOXSpacer = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        self.quitButton = QtGui.QPushButton("Quit")
-
-        self.buttonFrame = QtGui.QFrame()
-        self.buttonFrame.setMaximumSize(QtCore.QSize(16777215, 172))
-        self.buttonFrame.setMinimumSize(QtCore.QSize(111, 16777215))
-        self.buttonVBox = QtGui.QVBoxLayout(self.buttonFrame)
-        self.buttonVBox.addWidget(self.connectButton)
-        self.buttonVBox.addWidget(self.reScanButton)
-        self.buttonVBox.addWidget(self.helpButton)
-        self.buttonVBox.addWidget(self.aboutButton)
-        self.buttonVBox.addItem(self.buttonVBOXSpacer)
-        self.buttonVBox.addWidget(self.quitButton)        
-
-        self.portSelectCombo = QtGui.QComboBox()
-        self.comSelectSpacer = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-
-        self.comSelectVBox = QtGui.QVBoxLayout()
-        self.comSelectVBox.addWidget(self.portSelectCombo)
-        self.comSelectVBox.addItem(self.comSelectSpacer)
-
-        self.comSelectGroupBox = QtGui.QGroupBox()
-        self.comSelectGroupBox.setMaximumSize(QtCore.QSize(16777215, 172))
-        self.comSelectGroupBox.setMinimumSize(QtCore.QSize(150, 16777215))
-        self.comSelectGroupBox.setLayout(self.comSelectVBox)
-        self.comSelectGroupBox.setTitle('COM Port')
-
-        self.baud600Radio = QtGui.QRadioButton('600')
-        self.baud1200Radio = QtGui.QRadioButton('1200')
-        self.baud2400Radio = QtGui.QRadioButton('2400')
-        self.baud4800Radio = QtGui.QRadioButton('4800')
-        self.baud9600Radio = QtGui.QRadioButton('9600')
-        self.baud14400Radio = QtGui.QRadioButton('14400')
-        self.baud19200Radio = QtGui.QRadioButton('19200')
-        self.baud28800Radio = QtGui.QRadioButton('28800')
-        self.baud38400Radio = QtGui.QRadioButton('38400')
-        self.baud56000Radio = QtGui.QRadioButton('56000')
-        self.baud57600Radio = QtGui.QRadioButton('57600')
-        self.baud115200Radio = QtGui.QRadioButton('115200')
-        self.baud128000Radio = QtGui.QRadioButton('128000')
-        self.baud256000Radio = QtGui.QRadioButton('256000')
-        self.baudCustomRadio = QtGui.QRadioButton('custom')
-
-        self.baudGrid = QtGui.QGridLayout()
-        self.baudGrid.addWidget(self.baud600Radio, 0, 0)
-        self.baudGrid.addWidget(self.baud1200Radio, 1, 0)
-        self.baudGrid.addWidget(self.baud2400Radio, 2, 0)
-        self.baudGrid.addWidget(self.baud4800Radio, 3, 0)
-        self.baudGrid.addWidget(self.baud9600Radio, 4, 0)
-        self.baudGrid.addWidget(self.baud14400Radio, 0 ,1)
-        self.baudGrid.addWidget(self.baud19200Radio, 1, 1)
-        self.baudGrid.addWidget(self.baud28800Radio, 2, 1)
-        self.baudGrid.addWidget(self.baud38400Radio, 3, 1)
-        self.baudGrid.addWidget(self.baud56000Radio, 4, 1)
-        self.baudGrid.addWidget(self.baud57600Radio, 0, 2)
-        self.baudGrid.addWidget(self.baud115200Radio, 1 ,2)
-        self.baudGrid.addWidget(self.baud128000Radio, 2, 2)
-        self.baudGrid.addWidget(self.baud256000Radio, 3, 2)
-        self.baudGrid.addWidget(self.baudCustomRadio, 4, 2)
-
-        self.baudSelectGroupBox = QtGui.QGroupBox()
-        self.baudSelectGroupBox.setLayout(self.baudGrid)
-        self.baudSelectGroupBox.setTitle('Baud Rate')
-
-        self.dataBits5 = QtGui.QRadioButton('5')
-        self.dataBits6 = QtGui.QRadioButton('6')
-        self.dataBits7 = QtGui.QRadioButton('7')
-        self.dataBits8 = QtGui.QRadioButton('8')
-
-        self.dataBitsVBox = QtGui.QVBoxLayout()
-        self.dataBitsVBox.addWidget(self.dataBits5)
-        self.dataBitsVBox.addWidget(self.dataBits6)
-        self.dataBitsVBox.addWidget(self.dataBits7)
-        self.dataBitsVBox.addWidget(self.dataBits8)
-
-        self.dataBitsGroupBox = QtGui.QGroupBox('Data Bits')
-        self.dataBitsGroupBox.setLayout(self.dataBitsVBox)
-
-        self.parityNoneRadio = QtGui.QRadioButton('none')
-        self.parityOddRadio = QtGui.QRadioButton('odd')
-        self.parityEvenRadio = QtGui.QRadioButton('even')
-        self.parityMarkRadio = QtGui.QRadioButton('mark')
-        self.paritySpaceRadio = QtGui.QRadioButton('space')
-
-        self.parityVBox = QtGui.QVBoxLayout()
-        self.parityVBox.addWidget(self.parityNoneRadio)
-        self.parityVBox.addWidget(self.parityOddRadio)
-        self.parityVBox.addWidget(self.parityEvenRadio)
-        self.parityVBox.addWidget(self.parityMarkRadio)
-        self.parityVBox.addWidget(self.paritySpaceRadio)
-
-        self.parityGroupBox = QtGui.QGroupBox('Parity')
-        self.parityGroupBox.setLayout(self.parityVBox)
-
-        self.stopBits1 = QtGui.QRadioButton('1')
-        self.stopBits1_5 = QtGui.QRadioButton('1.5')
-        self.stopBits2 = QtGui.QRadioButton('2')
-
-        self.stopBitsVBox = QtGui.QVBoxLayout()
-        self.stopBitsVBox.addWidget(self.stopBits1)
-        self.stopBitsVBox.addWidget(self.stopBits1_5)
-        self.stopBitsVBox.addWidget(self.stopBits2)
-
-        self.stopBitsGroupBox = QtGui.QGroupBox('Stop Bits')
-        self.stopBitsGroupBox.setLayout(self.stopBitsVBox)
-
-        self.handshakingNone = QtGui.QRadioButton('none')
-        self.handshakingRTSCTS = QtGui.QRadioButton('RTS/CTS')
-        self.handshakingXONXOFF = QtGui.QRadioButton('XON/XOFF')
-        self.handshakingRTSCTSXONXOFF = QtGui.QRadioButton('RTS/CTS+XON/XOFF')
-        self.handshakingRTSOnTx = QtGui.QRadioButton('RTS on Tx')
-        self.handshakingInvert = QtGui.QCheckBox('invert')
-
-        self.handshakingHBox = QtGui.QHBoxLayout()
-        self.handshakingHBox.addWidget(self.handshakingRTSOnTx)
-        self.handshakingHBox.addWidget(self.handshakingInvert)
-
-        self.handshakingVBox = QtGui.QVBoxLayout()
-        self.handshakingVBox.addWidget(self.handshakingNone)
-        self.handshakingVBox.addWidget(self.handshakingRTSCTS)
-        self.handshakingVBox.addWidget(self.handshakingXONXOFF)
-        self.handshakingVBox.addWidget(self.handshakingRTSCTSXONXOFF)
-        self.handshakingVBox.addLayout(self.handshakingHBox)
-
-        self.handshakingGroupBox = QtGui.QGroupBox('Handshaking')
-        self.handshakingGroupBox.setLayout(self.handshakingVBox)
-
-        self.HBoxSpacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-
-        self.topHBox = QtGui.QHBoxLayout()
-        self.topHBox.addWidget(self.buttonFrame)
-        self.topHBox.addWidget(self.comSelectGroupBox)
-        self.topHBox.addWidget(self.baudSelectGroupBox)
-        self.topHBox.addWidget(self.dataBitsGroupBox)
-        self.topHBox.addWidget(self.parityGroupBox)
-        self.topHBox.addWidget(self.stopBitsGroupBox)
-        self.topHBox.addWidget(self.handshakingGroupBox)
-        self.topHBox.addItem(self.HBoxSpacer)
-
-        self.receiveEdit = QtGui.QPlainTextEdit()
-        self.receiveEdit.setReadOnly(True)
-        self.receiveEditCursor = QtGui.QTextCursor(self.receiveEdit.document())
-        self.transmitEdit = QtGui.QPlainTextEdit()
-        self.transmitEditCursor = QtGui.QTextCursor(self.transmitEdit.document())
-
-        self.vboxSplitter = QtGui.QSplitter()
-        self.vboxSplitter.setOrientation(QtCore.Qt.Vertical)
-        self.vboxSplitter.addWidget(self.receiveEdit)
-        self.vboxSplitter.addWidget(self.transmitEdit)
-
-        self.fileEdit = QtGui.QLineEdit()        
-        self.chooseFile = QtGui.QPushButton()        
-        self.sendFileLayoutSpacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.byteDelayLabel = QtGui.QLabel()        
-        self.byteDelaySpinBox = QtGui.QSpinBox()        
-        self.lineByLine = QtGui.QCheckBox()        
-        self.fileControl = QtGui.QPushButton()    
-
-
-        self.chooseFile.setText('Choose File')
-        self.byteDelayLabel.setText('Byte Delay(ms):')
-        self.lineByLine.setText('Line by Line')
-        self.fileControl.setText('Start')   
-        self.byteDelaySpinBox.setValue(10)
-        self.byteDelaySpinBox.setMaximum(10000)
-
-
-        self.sendFileFrame = QtGui.QWidget()
-        self.sendFileLayout = QtGui.QHBoxLayout(self.sendFileFrame)
-        self.sendFileLayout.setSpacing(9)
-        self.sendFileLayout.setSizeConstraint(QtGui.QLayout.SetDefaultConstraint)
-        self.sendFileLayout.setContentsMargins(0, 0, 0, 0)
-        self.sendFileLayout.setContentsMargins(0, 0, 0, 0)
-
-        self.sendFileLayout.addWidget(self.fileEdit)
-        self.sendFileLayout.addWidget(self.chooseFile)
-        self.sendFileLayout.addItem(self.sendFileLayoutSpacer)
-
-        self.sendFileLayout.addWidget(self.byteDelayLabel)
-        self.sendFileLayout.addWidget(self.byteDelaySpinBox)
-        self.sendFileLayout.addWidget(self.lineByLine)
-        self.sendFileLayout.addWidget(self.fileControl)
-
-        self.mainVBox = QtGui.QVBoxLayout()
-        self.mainVBox.addLayout(self.topHBox)
-        self.mainVBox.addWidget(self.vboxSplitter)
-        self.mainVBox.addWidget(self.sendFileFrame)
-
-        self.setLayout(self.mainVBox)
-
-        self.setWindowTitle('crossTerm')
-        self.show()
-
-    def closeEvent(self, event):
-        event.ignore()
-        cleanUp()
+def closeEvent(self, event):
+    event.ignore()
+    cleanUp()
 
 def cleanUp():
     global connected
@@ -228,7 +22,7 @@ def cleanUp():
 
 def baudToggled():
     global serialPort
-    buttons = ui.baudSelectGroupBox.findChildren(QtGui.QRadioButton)
+    buttons = ui.BAUD_RATE.findChildren(QtGui.QRadioButton)
     for button in buttons:
         if button.isChecked():
             print "Baud Rate: " + button.text()
@@ -236,7 +30,7 @@ def baudToggled():
 
 def dataBitsToggled():
     global serialPort
-    buttons = ui.dataBitsGroupBox.findChildren(QtGui.QRadioButton)
+    buttons = ui.DATA_BITS.findChildren(QtGui.QRadioButton)
     for button in buttons:
         if button.isChecked():
             print "Data Bits: " + button.text()
@@ -251,7 +45,7 @@ def dataBitsToggled():
 
 def parityToggled():
     global serialPort
-    buttons = ui.parityGroupBox.findChildren(QtGui.QRadioButton)
+    buttons = ui.PARITY.findChildren(QtGui.QRadioButton)
     for button in buttons:
         if button.isChecked():
             print "Parity: " + button.text()
@@ -268,7 +62,7 @@ def parityToggled():
 
 def stopBitsToggled():
     global serialPort
-    buttons = ui.stopBitsGroupBox.findChildren(QtGui.QRadioButton)
+    buttons = ui.STOP_BITS.findChildren(QtGui.QRadioButton)
     for button in buttons:
         if button.isChecked():
             print "Stop Bits: " + button.text()
@@ -280,7 +74,7 @@ def stopBitsToggled():
                 serialSettings.stopBits = serial.STOPBITS_TWO
 
 def handShakingToggled():
-    buttons = ui.handshakingGroupBox.findChildren(QtGui.QRadioButton)
+    buttons = ui.HANDSHAKING.findChildren(QtGui.QRadioButton)
     for button in buttons:
         if button.isChecked():
             print "Handshaking: " + button.text()
@@ -310,32 +104,32 @@ def serialPortConnected():
         serialPort.close()
         fRunner.timer.stop()
         connected = False
-        ui.connectButton.setText("Connect")
-        ui.comSelectGroupBox.setDisabled(False)
-        ui.baudSelectGroupBox.setDisabled(False)
-        ui.dataBitsGroupBox.setDisabled(False)
-        ui.parityGroupBox.setDisabled(False)
-        ui.stopBitsGroupBox.setDisabled(False)
-        ui.handshakingGroupBox.setDisabled(True)
-        ui.fileControl.setDisabled(True)
-        ui.lineByLine.setDisabled(False)
-        ui.byteDelaySpinBox.setDisabled(False)
+        ui.CONNECT_BUTTON.setText("Connect")
+        ui.COM_PORT.setDisabled(False)
+        ui.BAUD_RATE.setDisabled(False)
+        ui.DATA_BITS.setDisabled(False)
+        ui.PARITY.setDisabled(False)
+        ui.STOP_BITS.setDisabled(False)
+        ui.HANDSHAKING.setDisabled(True)
+        ui.FILE_CONTROL_BUTTON.setDisabled(True)
+        ui.LINE_BY_LINE_CHECK_BOX.setDisabled(False)
+        ui.BYTE_DELAY_SPIN_BOX.setDisabled(False)
 
     else:
-        serialSettings.port = ui.portSelectCombo.currentText()
+        serialSettings.port = ui.COM_PORT_SELECTOR.currentText()
         print "opening serial port: ", serialSettings.port
         serialPort = serial.Serial(serialSettings.port, serialSettings.baud, serialSettings.byteSize, serialSettings.parity, serialSettings.stopBits, serialSettings.time, xonxoff=False, rtscts=False, writeTimeout=None, dsrdtr=False, interCharTimeout=None)
         connected = True
-        ui.connectButton.setText("Disconnect")
-        ui.comSelectGroupBox.setDisabled(True)
-        ui.baudSelectGroupBox.setDisabled(True)
-        ui.dataBitsGroupBox.setDisabled(True)
-        ui.parityGroupBox.setDisabled(True)
-        ui.stopBitsGroupBox.setDisabled(True)
-        ui.handshakingGroupBox.setDisabled(True)
-        ui.fileControl.setDisabled(False)
-        ui.lineByLine.setDisabled(False)
-        ui.byteDelaySpinBox.setDisabled(False)
+        ui.CONNECT_BUTTON.setText("Disconnect")
+        ui.COM_PORT.setDisabled(True)
+        ui.BAUD_RATE.setDisabled(True)
+        ui.DATA_BITS.setDisabled(True)
+        ui.PARITY.setDisabled(True)
+        ui.STOP_BITS.setDisabled(True)
+        ui.HANDSHAKING.setDisabled(True)
+        ui.FILE_CONTROL_BUTTON.setDisabled(False)
+        ui.LINE_BY_LINE_CHECK_BOX.setDisabled(False)
+        ui.BYTE_DELAY_SPIN_BOX.setDisabled(False)
 
 class serialSettingsClass():
     baud = None
@@ -360,7 +154,7 @@ def list_serial_ports():
         return available
     elif system_name == "Darwin":
         # Mac
-        return glob.glob('/dev/tty.*') + glob.glob('/dev/cu.*')
+        return glob.glob('/dev/tty*') + glob.glob('/dev/cu*')
     else:
         # Assume Linux or something else
         return glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*')
@@ -369,13 +163,13 @@ def scan():
     system_name = platform.system()
     ports = list_serial_ports()
     print ports
-    for x in range(0, ui.portSelectCombo.count()):
-        ui.portSelectCombo.removeItem(0)
+    for x in range(0, ui.COM_PORT_SELECTOR.count()):
+        ui.COM_PORT_SELECTOR.removeItem(0)
     for i in ports:
         if system_name == "Windows":
-            ui.portSelectCombo.addItem("COM"+ str(i+1))
+            ui.COM_PORT_SELECTOR.addItem("COM"+ str(i+1))
         else:
-            ui.portSelectCombo.addItem(i)
+            ui.COM_PORT_SELECTOR.addItem(i)
 
 def receivePort():
     global connected
@@ -384,11 +178,15 @@ def receivePort():
     if connected:
         text = serialPort.read()
         if text != '':
+            if text == chr(10):
+                print "new line:"
+            if text == chr(13):
+                print "carrige retrun"
             ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
             ui.receiveEditCursor.insertText(text)
             ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
-            ui.receiveEdit.setTextCursor(ui.receiveEditCursor)
-            #ui.receiveEdit.appendPlainText(serialPort.read())
+            ui.RECEIVE_EDIT.setTextCursor(ui.receiveEditCursor)
+            #ui.RECEIVE_EDIT.appendPlainText(serialPort.read())
 
 def fileDialog():
     system_name = platform.system()
@@ -397,9 +195,9 @@ def fileDialog():
         print pathName
         #pathName = "%UserProfile%"
     else:
-        pathName = '$HOME'
+        pathName = pathName = os.getenv('$HOME')
     (fName,none) = QtGui.QFileDialog.getOpenFileName(ui, 'Open File', pathName)
-    ui.fileEdit.setText(fName)
+    ui.FILE_EDIT.setText(fName)
 
 class fileRunner:
     def __init__(self):
@@ -410,83 +208,90 @@ class fileRunner:
 
     def fileController(self):
         if self.state == 'idle':
-            fName = ui.fileEdit.text()
-            ui.fileEdit.setDisabled(True)
-            ui.chooseFile.setDisabled(True)
-            ui.byteDelaySpinBox.setDisabled(True)
+            fName = ui.FILE_EDIT.text()
+            ui.FILE_EDIT.setDisabled(True)
+            ui.CHOOSE_FILE.setDisabled(True)
+            ui.BYTE_DELAY_SPIN_BOX.setDisabled(True)
             self.fd = open(fName, 'rU')
-            if ui.lineByLine.checkState():
+            if ui.LINE_BY_LINE_CHECK_BOX.checkState():
                 self.state = 'nextLine'
-                ui.fileControl.setText('Next Line')
-                ui.lineByLine.setDisabled(True)
+                ui.FILE_CONTROL_BUTTON.setText('Next Line')
+                ui.LINE_BY_LINE_CHECK_BOX.setDisabled(True)
             else:
                 self.state = 'run'
-                ui.fileControl.setText('Pause')
-                ui.lineByLine.setDisabled(True)
-                self.timer.start(ui.byteDelaySpinBox.value())
+                ui.FILE_CONTROL_BUTTON.setText('Pause')
+                ui.LINE_BY_LINE_CHECK_BOX.setDisabled(True)
+                self.timer.start(ui.BYTE_DELAY_SPIN_BOX.value())
 
         elif self.state == 'nextLine':
             self.nextLine()
         elif self.state == 'run':
-            ui.byteDelaySpinBox.setDisabled(False)
+            ui.BYTE_DELAY_SPIN_BOX.setDisabled(False)
             self.state = 'pause'
             self.timer.stop()
-            ui.fileControl.setText('Run')
+            ui.FILE_CONTROL_BUTTON.setText('Run')
         elif self.state == 'pause':
             self.state = 'run'
-            ui.byteDelaySpinBox.setDisabled(True)
-            self.timer.start(ui.byteDelaySpinBox.value())
-            ui.fileControl.setText('Pause')
+            ui.BYTE_DELAY_SPIN_BOX.setDisabled(True)
+            self.timer.start(ui.BYTE_DELAY_SPIN_BOX.value())
+            ui.FILE_CONTROL_BUTTON.setText('Pause')
 
     def nextChar(self):
         ch = self.fd.read(1)
         if ch == '':
             self.fd.close()
             self.state = 'idle'
-            ui.fileControl.setText('Start')
-            ui.fileEdit.setDisabled(False)
-            ui.chooseFile.setDisabled(False)
-            ui.byteDelaySpinBox.setDisabled(False)
-            ui.lineByLine.setDisabled(False)
+            ui.FILE_CONTROL_BUTTON.setText('Start')
+            ui.FILE_EDIT.setDisabled(False)
+            ui.CHOOSE_FILE.setDisabled(False)
+            ui.BYTE_DELAY_SPIN_BOX.setDisabled(False)
+            ui.LINE_BY_LINE_CHECK_BOX.setDisabled(False)
             self.timer.stop()
         else:
             serialPort.write(ch)
             ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
             ui.transmitEditCursor.insertText(ch)
             ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
-            ui.transmitEdit.setTextCursor(ui.transmitEditCursor)
+            ui.TRANSMIT_EDIT.setTextCursor(ui.transmitEditCursor)
 
     def nextLine(self):
         lineText = self.fd.readline()
         if lineText == '':
             self.fd.close()
             self.state = 'idle'
-            ui.fileControl.setText('Start')
-            ui.fileEdit.setDisabled(False)
-            ui.chooseFile.setDisabled(False)
-            ui.byteDelaySpinBox.setDisabled(True)
-            ui.lineByLine.setDisabled(False)
+            ui.FILE_CONTROL_BUTTON.setText('Start')
+            ui.FILE_EDIT.setDisabled(False)
+            ui.CHOOSE_FILE.setDisabled(False)
+            ui.BYTE_DELAY_SPIN_BOX.setDisabled(True)
+            ui.LINE_BY_LINE_CHECK_BOX.setDisabled(False)
         else:
             serialPort.write(lineText)
             ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
             ui.transmitEditCursor.insertText(lineText)
             ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
-            ui.transmitEdit.setTextCursor(ui.transmitEditCursor)
+            ui.TRANSMIT_EDIT.setTextCursor(ui.transmitEditCursor)
 
 
 def lineByLineChange():
-    if ui.lineByLine.checkState():
-        ui.byteDelaySpinBox.setValue(0)
-        ui.byteDelaySpinBox.setDisabled(True)
+    if ui.LINE_BY_LINE_CHECK_BOX.checkState():
+        ui.BYTE_DELAY_SPIN_BOX.setValue(0)
+        ui.BYTE_DELAY_SPIN_BOX.setDisabled(True)
     else:
-        ui.byteDelaySpinBox.setValue(10)
-        ui.byteDelaySpinBox.setDisabled(False)
+        ui.BYTE_DELAY_SPIN_BOX.setValue(10)
+        ui.BYTE_DELAY_SPIN_BOX.setDisabled(False)
 
+def loadUiWidget(uifilename, parent=None):
+    loader = QtUiTools.QUiLoader()
+    uifile = QtCore.QFile(uifilename)
+    uifile.open(QtCore.QFile.ReadOnly)
+    ui = loader.load(uifile, parent)
+    uifile.close()
+    return ui
 
 def main():
     app = QtGui.QApplication(sys.argv)
     global ui
-    ui = uiClass()
+    ui = loadUiWidget("crossTerm.ui")
     global fRunner
     fRunner = fileRunner()
 
@@ -499,45 +304,47 @@ def main():
     serialSettings = serialSettingsClass()
 
     keyFilter = KeyPressEater(ui)
+    ui.transmitEditCursor = QtGui.QTextCursor(ui.TRANSMIT_EDIT.document())
+    ui.receiveEditCursor = QtGui.QTextCursor(ui.RECEIVE_EDIT.document())
 
-    ui.quitButton.clicked.connect(cleanUp)
-    ui.connectButton.clicked.connect(serialPortConnected)
-    ui.reScanButton.clicked.connect(scan)
-    ui.chooseFile.clicked.connect(fileDialog)
-    ui.fileControl.clicked.connect(fRunner.fileController)
-    ui.lineByLine.stateChanged.connect(lineByLineChange)
+    ui.QUIT_BUTTON.clicked.connect(cleanUp)
+    ui.CONNECT_BUTTON.clicked.connect(serialPortConnected)
+    ui.RESCAN_BUTTON.clicked.connect(scan)
+    ui.CHOOSE_FILE.clicked.connect(fileDialog)
+    ui.FILE_CONTROL_BUTTON.clicked.connect(fRunner.fileController)
+    ui.LINE_BY_LINE_CHECK_BOX.stateChanged.connect(lineByLineChange)
     scan()
     #ui.portSelectCombo.activated[str].connect()
 
-    connectRadioButtons(ui.baudSelectGroupBox, baudToggled)
-    connectRadioButtons(ui.dataBitsGroupBox, dataBitsToggled)
-    connectRadioButtons(ui.parityGroupBox, parityToggled)
-    connectRadioButtons(ui.stopBitsGroupBox, stopBitsToggled)
-    connectRadioButtons(ui.handshakingGroupBox, handShakingToggled)
+    connectRadioButtons(ui.BAUD_RATE, baudToggled)
+    connectRadioButtons(ui.DATA_BITS, dataBitsToggled)
+    connectRadioButtons(ui.PARITY, parityToggled)
+    connectRadioButtons(ui.STOP_BITS, stopBitsToggled)
+    connectRadioButtons(ui.HANDSHAKING, handShakingToggled)
     
-    ui.baud9600Radio.setChecked(True)
+    ui.BAUD_9600.setChecked(True)
     baudToggled()
-    ui.dataBits8.setChecked(True)
+    ui.DATA_BITS_8.setChecked(True)
     dataBitsToggled()
-    ui.parityNoneRadio.setChecked(True)
+    ui.PARITY_NONE.setChecked(True)
     parityToggled()
-    ui.stopBits1.setChecked(True)
+    ui.STOP_BITS_1.setChecked(True)
     stopBitsToggled()
-    ui.handshakingNone.setChecked(True)
+    ui.HANDSHAKING_NONE.setChecked(True)
     handShakingToggled()
 
-    ui.transmitEdit.installEventFilter(keyFilter)
-    ui.handshakingGroupBox.setDisabled(True)
-    ui.stopBits1_5.setDisabled(True)
-    ui.baudCustomRadio.setDisabled(True)
-    ui.fileControl.setDisabled(True)
+    ui.TRANSMIT_EDIT.installEventFilter(keyFilter)
+    ui.HANDSHAKING.setDisabled(True)
+    ui.STOP_BITS_1_5.setDisabled(True)
+    ui.BAUD_CUSTOM.setDisabled(True)
+    ui.FILE_CONTROL_BUTTON.setDisabled(True)
 
     timer = QtCore.QTimer()
     timer.timeout.connect(receivePort)
     timer.start(1)
 
+    ui.show()
     sys.exit(app.exec_())
-
 
 if __name__ == '__main__':
     main()
