@@ -92,6 +92,9 @@ class KeyPressEater(QtCore.QObject):
                 #send serial here
                 print "Key Press: " , ch
                 print "Key Length:" , len(ch)
+                if ch == chr(13):
+                    print "send: carrige return"
+                    serialPort.write(chr(10))
                 if connected == True:
                     serialPort.write(ch)
 
@@ -179,9 +182,9 @@ def receivePort():
         text = serialPort.read()
         if text != '':
             if text == chr(10):
-                print "new line:"
+                print "receved: new line:"
             if text == chr(13):
-                print "carrige retrun"
+                print "receved: carrige retrun"
             ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
             ui.receiveEditCursor.insertText(text)
             ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
