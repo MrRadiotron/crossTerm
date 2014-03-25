@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1065</width>
+    <width>859</width>
     <height>516</height>
    </rect>
   </property>
@@ -533,7 +533,7 @@
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
-        <widget class="QWidget" name="widget" native="true">
+        <widget class="QWidget" name="RECEIVE_BAR" native="true">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -554,9 +554,66 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QCheckBox" name="checkBox">
+           <widget class="QLabel" name="label_2">
             <property name="text">
-             <string>CheckBox</string>
+             <string>Receive:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Fixed</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>6</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="RECEIVE_CLEAR_BUTTON">
+            <property name="text">
+             <string>Clear</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="RECEIVE_CR">
+            <property name="text">
+             <string>CR</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="RECEIVE_LF">
+            <property name="text">
+             <string>LF</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="RECEIVE_CRLF">
+            <property name="text">
+             <string>CRLF</string>
             </property>
            </widget>
           </item>
@@ -565,7 +622,8 @@
         <widget class="QPlainTextEdit" name="RECEIVE_EDIT">
          <property name="font">
           <font>
-           <family>Ubuntu Mono</family>
+           <family>Monospace</family>
+           <kerning>false</kerning>
           </font>
          </property>
          <property name="lineWrapMode">
@@ -582,17 +640,17 @@
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
-         <widget class="QWidget" name="widget_3" native="true">
+         <widget class="QWidget" name="TRANSMIT_BAR" native="true">
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>18</height>
+            <height>25</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>18</height>
+            <height>25</height>
            </size>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -603,9 +661,50 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="QCheckBox" name="checkBox_2">
+            <widget class="QLabel" name="label">
              <property name="text">
-              <string>CheckBox</string>
+              <string>Transmit:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="TRANSMIT_CLEAR_BUTTON">
+             <property name="text">
+              <string>Clear</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="TRANSMIT_CR">
+             <property name="text">
+              <string>CR</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="TRANSMIT_LF">
+             <property name="text">
+              <string>LF</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="TRANSMIT_CRLF">
+             <property name="text">
+              <string>CRLF</string>
              </property>
             </widget>
            </item>
@@ -614,7 +713,7 @@
          <widget class="QPlainTextEdit" name="TRANSMIT_EDIT">
           <property name="font">
            <font>
-            <family>Ubuntu Mono</family>
+            <family>Monospace</family>
             <weight>50</weight>
             <italic>false</italic>
             <bold>false</bold>

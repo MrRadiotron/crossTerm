@@ -79,6 +79,27 @@ def handShakingToggled():
         if button.isChecked():
             print "Handshaking: " + button.text()
 
+def transmit_bar_toggled():
+    global transmit_line_ending
+    buttons = ui.TRANSMIT_BAR.findChildren(QtGui.QRadioButton)
+    for button in buttons:
+        if button.isChecked():
+            print "Transmit line ending: " + button.text()
+            transmit_line_ending = button.text()
+            """if button.text() == 'CR':
+                serialSettings.parity = serial.PARITY_NONE
+            if button.text() == 'LF':
+                serialSettings.parity = serial.PARITY_EVEN
+            if button.text() == 'CRLF':
+                serialSettings.parity = serial.PARITY_ODD"""
+def receive_bar_toggled():
+    global receive_line_ending
+    buttons = ui.RECEIVE_BAR.findChildren(QtGui.QRadioButton)
+    for button in buttons:
+        if button.isChecked():
+            print "receive line ending: " + button.text()
+            receive_line_ending = button.text()
+
 def connectRadioButtons(groupBox, function):
     buttons = groupBox.findChildren(QtGui.QRadioButton)
     for button in buttons:
@@ -86,15 +107,45 @@ def connectRadioButtons(groupBox, function):
 
 class KeyPressEater(QtCore.QObject):
     def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.ContextMenu:
+            print "paste event"
         if event.type() == QtCore.QEvent.KeyPress:
-            ch = event.text().encode('latin-1')
+            if (event.matches(QtGui.QKeySequence.Paste) or event.matches(QtGui.QKeySequence.Paste)):
+                clipboard = QtGui.QApplication.clipboard()
+                ch = clipboard.text().encode('latin-1')
+                print ch
+            else:
+                ch = event.text().encode('latin-1')
+
             if len(ch):
                 #send serial here
                 print "Key Press: " , ch
                 print "Key Length:" , len(ch)
+
                 if ch == chr(13):
-                    print "send: carrige return"
-                    serialPort.write(chr(10))
+                    if transmit_line_ending == "LF":
+                        print "send: LF"
+                        ch = chr(10)
+                    elif transmit_line_ending == "CRLF":
+                        print "send: CRLF"
+                        ch = "\r\n"
+                        #ch = chr(13)
+                        #ch.join(chr(10))
+                    else:
+                        print "send: CR"
+
+                elif ch == chr(10):
+                    if transmit_line_ending == "CR":
+                        print "send: CR"
+                        ch = chr(13)
+                    elif transmit_line_ending == "CRLF":
+                        print "send: CRLF"
+                        ch = "\r\n"
+                        #ch = chr(13)
+                        #ch.join(chr(10))
+                    else:
+                        print "send: LF"
+
                 if connected == True:
                     serialPort.write(ch)
 
@@ -103,9 +154,11 @@ class KeyPressEater(QtCore.QObject):
 def serialPortConnected():
     global serialPort
     global connected
+    global timer
     if connected == True:
         serialPort.close()
         fRunner.timer.stop()
+        timer.stop()
         connected = False
         ui.CONNECT_BUTTON.setText("Connect")
         ui.COM_PORT.setDisabled(False)
@@ -117,12 +170,15 @@ def serialPortConnected():
         ui.FILE_CONTROL_BUTTON.setDisabled(True)
         ui.LINE_BY_LINE_CHECK_BOX.setDisabled(False)
         ui.BYTE_DELAY_SPIN_BOX.setDisabled(False)
+        #ui.TRANSMIT_BAR.setDisabled(False)
+        #ui.RECEIVE_BAR.setDisabled(False)
 
     else:
         serialSettings.port = ui.COM_PORT_SELECTOR.currentText()
         print "opening serial port: ", serialSettings.port
         serialPort = serial.Serial(serialSettings.port, serialSettings.baud, serialSettings.byteSize, serialSettings.parity, serialSettings.stopBits, serialSettings.time, xonxoff=False, rtscts=False, writeTimeout=None, dsrdtr=False, interCharTimeout=None)
         connected = True
+        timer.start(1)
         ui.CONNECT_BUTTON.setText("Disconnect")
         ui.COM_PORT.setDisabled(True)
         ui.BAUD_RATE.setDisabled(True)
@@ -133,6 +189,8 @@ def serialPortConnected():
         ui.FILE_CONTROL_BUTTON.setDisabled(False)
         ui.LINE_BY_LINE_CHECK_BOX.setDisabled(False)
         ui.BYTE_DELAY_SPIN_BOX.setDisabled(False)
+        #ui.TRANSMIT_BAR.setDisabled(True)
+        #ui.RECEIVE_BAR.setDisabled(True)
 
 class serialSettingsClass():
     baud = None
@@ -177,14 +235,32 @@ def scan():
 def receivePort():
     global connected
     global serialPort
+    global last_char
     #print "timer"
     if connected:
         text = serialPort.read()
         if text != '':
             if text == chr(10):
-                print "receved: new line:"
-            if text == chr(13):
-                print "receved: carrige retrun"
+                print "received: LF"
+                if receive_line_ending == "CR":
+                    text = ''
+                elif receive_line_ending == "CRLF":
+                    if last_char:
+                        print "received: CRLF"
+                        text = chr(10)
+                    else:
+                        text = ''
+                last_char = False
+            elif text == chr(13):
+                print "received: CR"
+                last_char = True
+                if receive_line_ending == "LF":
+                    text = ''
+                elif receive_line_ending == "CRLF":
+                    text = ''
+            else:
+                last_char = False
+
             ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
             ui.receiveEditCursor.insertText(text)
             ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
@@ -283,6 +359,15 @@ def lineByLineChange():
         ui.BYTE_DELAY_SPIN_BOX.setValue(10)
         ui.BYTE_DELAY_SPIN_BOX.setDisabled(False)
 
+def clear_plain_text(plain_text):
+    plain_text.setPlainText("")
+
+def clear_transmit():
+    clear_plain_text(ui.TRANSMIT_EDIT)
+
+def clear_receive():
+    clear_plain_text(ui.RECEIVE_EDIT)
+
 def loadUiWidget(uifilename, parent=None):
     loader = QtUiTools.QUiLoader()
     uifile = QtCore.QFile(uifilename)
@@ -292,6 +377,7 @@ def loadUiWidget(uifilename, parent=None):
     return ui
 
 def main():
+    global timer
     app = QtGui.QApplication(sys.argv)
     global ui
     ui = loadUiWidget("crossTerm.ui")
@@ -316,6 +402,8 @@ def main():
     ui.CHOOSE_FILE.clicked.connect(fileDialog)
     ui.FILE_CONTROL_BUTTON.clicked.connect(fRunner.fileController)
     ui.LINE_BY_LINE_CHECK_BOX.stateChanged.connect(lineByLineChange)
+    ui.TRANSMIT_CLEAR_BUTTON.clicked.connect(clear_transmit)
+    ui.RECEIVE_CLEAR_BUTTON.clicked.connect(clear_receive)
     scan()
     #ui.portSelectCombo.activated[str].connect()
 
@@ -324,6 +412,8 @@ def main():
     connectRadioButtons(ui.PARITY, parityToggled)
     connectRadioButtons(ui.STOP_BITS, stopBitsToggled)
     connectRadioButtons(ui.HANDSHAKING, handShakingToggled)
+    connectRadioButtons(ui.TRANSMIT_BAR, transmit_bar_toggled)
+    connectRadioButtons(ui.RECEIVE_BAR, receive_bar_toggled)
     
     ui.BAUD_9600.setChecked(True)
     baudToggled()
@@ -335,6 +425,10 @@ def main():
     stopBitsToggled()
     ui.HANDSHAKING_NONE.setChecked(True)
     handShakingToggled()
+    ui.TRANSMIT_LF.setChecked(True)
+    transmit_bar_toggled()
+    ui.RECEIVE_LF.setChecked(True)
+    receive_bar_toggled()
 
     ui.TRANSMIT_EDIT.installEventFilter(keyFilter)
     ui.HANDSHAKING.setDisabled(True)
@@ -343,8 +437,7 @@ def main():
     ui.FILE_CONTROL_BUTTON.setDisabled(True)
 
     timer = QtCore.QTimer()
-    timer.timeout.connect(receivePort)
-    timer.start(1)
+    timer.timeout.connect(receivePort)    
 
     ui.show()
     sys.exit(app.exec_())
