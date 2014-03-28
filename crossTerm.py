@@ -112,10 +112,10 @@ class KeyPressEater(QtCore.QObject):
         if event.type() == QtCore.QEvent.KeyPress:
             if (event.matches(QtGui.QKeySequence.Paste) or event.matches(QtGui.QKeySequence.Paste)):
                 clipboard = QtGui.QApplication.clipboard()
-                ch = clipboard.text().encode('latin-1')
+                ch = clipboard.text().encode('utf-8')
                 print ch
             else:
-                ch = event.text().encode('latin-1')
+                ch = event.text().encode('utf-8')
 
             if len(ch):
                 #send serial here
@@ -376,11 +376,39 @@ def loadUiWidget(uifilename, parent=None):
     uifile.close()
     return ui
 
+class my_plain_edit(QtGui.QPlainTextEdit):
+    def contextMenuEvent(self, event):
+        menu = self.createStandardContextMenu()
+        print "custom context menu"
+        x = menu.actions()
+        for i in x:
+            print "text: " + i.text().encode('utf-8')
+            if(i.text().encode('utf-8').lower().find("paste")):
+                i.triggered.connect(self.context_paste)
+
+        menu.exec_(event.globalPos())
+
+    def context_paste(self):
+        print "context paint"
+        clipboard = QtGui.QApplication.clipboard()
+        ch = clipboard.text().encode('utf-8')
+        print ch
+
+        if connected == True:
+            serialPort.write(ch)
+
 def main():
     global timer
     app = QtGui.QApplication(sys.argv)
     global ui
     ui = loadUiWidget("crossTerm.ui")
+
+    ui.TRANSMIT_EDIT.setParent(None)
+    ui.TRANSMIT_EDIT = my_plain_edit()
+
+    ui.splitter.addWidget(ui.TRANSMIT_EDIT)
+
+
     global fRunner
     fRunner = fileRunner()
 
