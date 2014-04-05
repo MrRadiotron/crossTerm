@@ -4,6 +4,7 @@ import sys, os
 from PySide import QtCore, QtGui, QtUiTools
 import serial
 import platform, glob
+import threading
 
 
 
@@ -13,12 +14,16 @@ def closeEvent(self, event):
 
 def cleanUp():
     global connected
+    global serial_thread
     if connected:
+        connected = False
+        serial_thread.join()
         serialPort.close()
     if fRunner.fd != None:
         fRunner.fd.close()
     QtCore.QCoreApplication.instance().quit()
     
+
 
 def baudToggled():
     global serialPort
@@ -154,12 +159,12 @@ class KeyPressEater(QtCore.QObject):
 def serialPortConnected():
     global serialPort
     global connected
-    global timer
+    global serial_thread
     if connected == True:
-        serialPort.close()
-        fRunner.timer.stop()
-        timer.stop()
         connected = False
+        fRunner.timer.stop()
+        serial_thread.join()        
+        serialPort.close()
         ui.CONNECT_BUTTON.setText("Connect")
         ui.COM_PORT.setDisabled(False)
         ui.BAUD_RATE.setDisabled(False)
@@ -178,7 +183,9 @@ def serialPortConnected():
         print "opening serial port: ", serialSettings.port
         serialPort = serial.Serial(serialSettings.port, serialSettings.baud, serialSettings.byteSize, serialSettings.parity, serialSettings.stopBits, serialSettings.time, xonxoff=False, rtscts=False, writeTimeout=None, dsrdtr=False, interCharTimeout=None)
         connected = True
-        timer.start(1)
+        serial_thread = threading.Thread(target=receivePort)
+        serial_thread.setDaemon(True)
+        serial_thread.start()
         ui.CONNECT_BUTTON.setText("Disconnect")
         ui.COM_PORT.setDisabled(True)
         ui.BAUD_RATE.setDisabled(True)
@@ -197,7 +204,7 @@ class serialSettingsClass():
     byteSize = None
     parity = None
     stopBits = None
-    time = 0
+    time = None
     port = None
 
 def list_serial_ports():
@@ -236,10 +243,12 @@ def receivePort():
     global connected
     global serialPort
     global last_char
-    #print "timer"
-    if connected:
-        text = serialPort.read()
-        if text != '':
+
+    while connected:
+        try:
+            print "thread here"
+            text = serialPort.read(1)
+            #if text != '':
             if text == chr(10):
                 print "received: LF"
                 if receive_line_ending == "CR":
@@ -266,6 +275,10 @@ def receivePort():
             ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
             ui.RECEIVE_EDIT.setTextCursor(ui.receiveEditCursor)
             #ui.RECEIVE_EDIT.appendPlainText(serialPort.read())
+        except serial.SerialException, e:
+            connected = False
+
+
 
 def fileDialog():
     system_name = platform.system()
@@ -398,7 +411,6 @@ class my_plain_edit(QtGui.QPlainTextEdit):
             serialPort.write(ch)
 
 def main():
-    global timer
     app = QtGui.QApplication(sys.argv)
     global ui
     ui = loadUiWidget("crossTerm.ui")
@@ -463,9 +475,6 @@ def main():
     ui.STOP_BITS_1_5.setDisabled(True)
     ui.BAUD_CUSTOM.setDisabled(True)
     ui.FILE_CONTROL_BUTTON.setDisabled(True)
-
-    timer = QtCore.QTimer()
-    timer.timeout.connect(receivePort)    
 
     ui.show()
     sys.exit(app.exec_())
