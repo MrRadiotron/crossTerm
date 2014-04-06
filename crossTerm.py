@@ -112,6 +112,7 @@ def connectRadioButtons(groupBox, function):
 
 class KeyPressEater(QtCore.QObject):
     def eventFilter(self, obj, event):
+        global connected
         if event.type() == QtCore.QEvent.ContextMenu:
             print "paste event"
         if event.type() == QtCore.QEvent.KeyPress:
@@ -152,7 +153,10 @@ class KeyPressEater(QtCore.QObject):
                         print "send: LF"
 
                 if connected == True:
-                    serialPort.write(ch)
+                    try:
+                        serialPort.write(ch)
+                    except serial.SerialException, e:
+                        connected = False
 
         return QtCore.QObject.eventFilter(self, obj, event)
 
@@ -357,7 +361,11 @@ class fileRunner:
             ui.BYTE_DELAY_SPIN_BOX.setDisabled(True)
             ui.LINE_BY_LINE_CHECK_BOX.setDisabled(False)
         else:
-            serialPort.write(lineText)
+            try:
+                serialPort.write(lineText)
+            except serial.SerialException, e:
+                connected = False
+
             ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
             ui.transmitEditCursor.insertText(lineText)
             ui.transmitEditCursor.movePosition(ui.transmitEditCursor.End)
@@ -408,7 +416,11 @@ class my_plain_edit(QtGui.QPlainTextEdit):
         print ch
 
         if connected == True:
-            serialPort.write(ch)
+            try:
+                serialPort.write(ch)
+            except serial.SerialException, e:
+                connected = False
+
 
 def main():
     app = QtGui.QApplication(sys.argv)
