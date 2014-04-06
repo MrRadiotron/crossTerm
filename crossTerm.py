@@ -2,6 +2,7 @@
 
 import sys, os
 from PySide import QtCore, QtGui, QtUiTools
+from PySide.QtCore import QThread
 import serial
 import platform, glob
 import threading
@@ -17,7 +18,8 @@ def cleanUp():
     global serial_thread
     if connected:
         connected = False
-        serial_thread.join()
+        while serial_thread.running:
+            pass
         serialPort.close()
     if fRunner.fd != None:
         fRunner.fd.close()
@@ -167,7 +169,8 @@ def serialPortConnected():
     if connected == True:
         connected = False
         fRunner.timer.stop()
-        serial_thread.join()        
+        while serial_thread.running:
+            pass
         serialPort.close()
         ui.CONNECT_BUTTON.setText("Connect")
         ui.COM_PORT.setDisabled(False)
@@ -187,8 +190,7 @@ def serialPortConnected():
         print "opening serial port: ", serialSettings.port
         serialPort = serial.Serial(serialSettings.port, serialSettings.baud, serialSettings.byteSize, serialSettings.parity, serialSettings.stopBits, serialSettings.time, xonxoff=False, rtscts=False, writeTimeout=None, dsrdtr=False, interCharTimeout=None)
         connected = True
-        serial_thread = threading.Thread(target=receivePort)
-        serial_thread.setDaemon(True)
+        serial_thread = receivePort()
         serial_thread.start()
         ui.CONNECT_BUTTON.setText("Disconnect")
         ui.COM_PORT.setDisabled(True)
@@ -243,44 +245,50 @@ def scan():
         else:
             ui.COM_PORT_SELECTOR.addItem(i)
 
-def receivePort():
-    global connected
-    global serialPort
-    global last_char
+class receivePort(QThread):
+    def __init__(self):
+        self.running = False
+        QThread.__init__(self)
 
-    while connected:
-        try:
-            print "thread here"
-            text = serialPort.read(1)
-            #if text != '':
-            if text == chr(10):
-                print "received: LF"
-                if receive_line_ending == "CR":
-                    text = ''
-                elif receive_line_ending == "CRLF":
-                    if last_char:
-                        print "received: CRLF"
-                        text = chr(10)
-                    else:
+    def run(self):
+        global connected
+        global serialPort
+        global last_char
+        self.running = True
+
+        while connected:
+            try:
+                print "thread here"
+                text = serialPort.read(1)
+                #if text != '':
+                if text == chr(10):
+                    print "received: LF"
+                    if receive_line_ending == "CR":
                         text = ''
-                last_char = False
-            elif text == chr(13):
-                print "received: CR"
-                last_char = True
-                if receive_line_ending == "LF":
-                    text = ''
-                elif receive_line_ending == "CRLF":
-                    text = ''
-            else:
-                last_char = False
+                    elif receive_line_ending == "CRLF":
+                        if last_char:
+                            print "received: CRLF"
+                            text = chr(10)
+                        else:
+                            text = ''
+                    last_char = False
+                elif text == chr(13):
+                    print "received: CR"
+                    last_char = True
+                    if receive_line_ending == "LF":
+                        text = ''
+                    elif receive_line_ending == "CRLF":
+                        text = ''
+                else:
+                    last_char = False
 
-            ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
-            ui.receiveEditCursor.insertText(text)
-            ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
-            ui.RECEIVE_EDIT.setTextCursor(ui.receiveEditCursor)
-            #ui.RECEIVE_EDIT.appendPlainText(serialPort.read())
-        except serial.SerialException, e:
-            connected = False
+                ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
+                ui.receiveEditCursor.insertText(text)
+                ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
+                ui.RECEIVE_EDIT.setTextCursor(ui.receiveEditCursor)
+                #ui.RECEIVE_EDIT.appendPlainText(serialPort.read())
+            except serial.SerialException, e:
+                connected = False
 
 
 
