@@ -7,8 +7,6 @@ import serial
 import platform, glob
 import threading
 
-
-
 def closeEvent(self, event):
     event.ignore()
     cleanUp()
@@ -25,8 +23,6 @@ def cleanUp():
         fRunner.fd.close()
     QtCore.QCoreApplication.instance().quit()
     
-
-
 def baudToggled():
     global serialPort
     buttons = ui.BAUD_RATE.findChildren(QtGui.QRadioButton)
