@@ -1,77 +1,69 @@
-#! /usr/bin/python
+import faulthandler
 import sys
 import serial
 import threading
 from PySide import QtCore, QtGui, QtUiTools
-
+    
 class serial_port_class(object):
-	def __init__(self, ui):
-		print "create port"
-		self.ui = ui
-		self.connected = False
+    def __init__(self):
+        self.connected = False
 
-	def __del__(self):
-		print "delete port"
-		self.disconnect_port()
+    def __del__(self):
+        self.disconnect_port()
 
-	def connect_port(self):
-		print "connect_port"
-		try:
-			self.serial_port = serial.Serial("/dev/tty.usbmodem1451", 9600, timeout = None)
-			self.connected = True
-		except serial.SerialException, e:
-			self.connected = False
+    def connect_port(self):
+        try:
+            self.serial_port = serial.Serial("/dev/tty.usbserial-A601R86K", 9600, timeout = None)
+            self.connected = True
+        except serial.SerialException, e:
+            self.connected = False
+        if self.connected:
+            self.serial_thread = threading.Thread(target=self.recieve_port, args=(self))
+            self.serial_thread.start()
 
-		if self.connected:
-			print "launch thread"
-			self.serial_thread = threading.Thread(target=self.recieve_port, args=([self.ui]))
-			self.serial_thread.start()
+    def disconnect_port(self):
+        self.connected = False
+        self.serial_thread.join()
+        self.serial_port.close()
+    
+    def recieve_port(self):
 
-	def disconnect_port(self):
-		print "disconnect_port"
-		self.connected = False
-		self.serial_thread.join()
-		self.serial_port.close()
-
-	def recieve_port(self, ui):
-		print "thread_start"
-		while self.connected:
-			print"thread_loop"
-			try:
-				text = self.serial_port.read(1)
-				if text != '':
-					ui.plain_edit.appendPlainText(text)
-			except serial.SerialException, e:
-				connected = False
-		print "thread_exit"
+        while self.connected:
+            try:
+                text = self.serial_port.read(1)
+                if text != '':
+                    print "text"
+            except serial.SerialException, e:
+                connected = False
 
 
+class KeyPressEater(object):
+    def connect_port(self):
+        self.serial_thread = threading.Thread(target=self.eventFilter)
+        self.serial_thread.start()
 
-class KeyPressEater(QtCore.QObject):
-	def eventFilter(self, obj, event):
-		global serial_port
-		if event.type() == QtCore.QEvent.KeyPress:	
-			ch = event.text().encode('utf-8')
-			print "got " + ch
-			if serial_port.connected == True:
-				print "send " + ch
-				serial_port.serial_port.write(ch)
-
-		return QtCore.QObject.eventFilter(self, obj, event)
-
-
+    def eventFilter(self):
+        global serial_port
+        while serial_port.connected == True:
+            ch = raw_input()
+            if serial_port.connected == True:
+                serial_port.serial_port.write(ch)
+            return QtCore.QObject.eventFilter(self, obj, event)
+    
 def main():
-	print "main"
-	global serial_port
-	app = QtGui.QApplication(sys.argv)
-	ui = QtGui.QWidget()
-	ui.plain_edit = QtGui.QPlainTextEdit(ui)
-	keyFilter = KeyPressEater(ui)
-	ui.plain_edit.installEventFilter(keyFilter)
-	serial_port = serial_port_class(ui)
-	serial_port.connect_port()
-	ui.show()
-	sys.exit(app.exec_())
+    global serial_port
+
+    faulthandler.enable()
+    
+    serial_port = serial_port_class()
+    serial_port.connect_port()
+    heyeater = KeyPressEater()
+
+    if serial_port.connected== True:
+        heyeater.connect_port()
+        heyeater.serial_thread.join()
+
 
 if __name__ == '__main__':
-	main()
+    main()
+
