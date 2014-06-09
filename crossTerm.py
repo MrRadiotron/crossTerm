@@ -165,9 +165,9 @@ def serialPortConnected():
     global serial_thread
     if connected == True:
         connected = False
-        fRunner.timer.stop()
-        while serial_thread.running:
-            pass
+        #fRunner.timer.stop()
+        #while serial_thread.running:
+        #    #pass
         serialPort.close()
         ui.CONNECT_BUTTON.setText("Connect")
         ui.COM_PORT.setDisabled(False)
@@ -185,9 +185,10 @@ def serialPortConnected():
     else:
         serialSettings.port = ui.COM_PORT_SELECTOR.currentText()
         print "opening serial port: ", serialSettings.port
-        serialPort = serial.Serial(serialSettings.port, serialSettings.baud, serialSettings.byteSize, serialSettings.parity, serialSettings.stopBits, serialSettings.time, xonxoff=False, rtscts=False, writeTimeout=None, dsrdtr=False, interCharTimeout=None)
+        serialPort = serial.Serial(serialSettings.port, serialSettings.baud, serialSettings.byteSize, serialSettings.parity, serialSettings.stopBits, serialSettings.time, xonxoff=False, rtscts=False, writeTimeout=None, dsrdtr=False, interCharTimeout=0)
         connected = True
         serial_thread = receivePort()
+        serial_thread.message.connect(write_terminal, QtCore.Qt.QueuedConnection)
         serial_thread.start()
         ui.CONNECT_BUTTON.setText("Disconnect")
         ui.COM_PORT.setDisabled(True)
@@ -243,6 +244,7 @@ def scan():
             ui.COM_PORT_SELECTOR.addItem(i)
 
 class receivePort(QThread):
+    message = QtCore.Signal(str)
     def __init__(self):
         self.running = False
         QThread.__init__(self)
@@ -251,12 +253,13 @@ class receivePort(QThread):
         global connected
         global serialPort
         global last_char
+        global ui
         self.running = True
 
         while connected:
             try:
                 print "thread here"
-                text = serialPort.read(1)
+                text = serialPort.read()
                 #if text != '':
                 if text == chr(10):
                     print "received: LF"
@@ -279,15 +282,22 @@ class receivePort(QThread):
                 else:
                     last_char = False
 
-                ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
+                self.message.emit(text)    
+                """ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
                 ui.receiveEditCursor.insertText(text)
                 ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
                 ui.RECEIVE_EDIT.setTextCursor(ui.receiveEditCursor)
-                #ui.RECEIVE_EDIT.appendPlainText(serialPort.read())
+                #ui.RECEIVE_EDIT.appendPlainText(serialPort.read())"""
             except serial.SerialException, e:
                 connected = False
 
 
+def write_terminal(text):
+    ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
+    ui.receiveEditCursor.insertText(text)
+    ui.receiveEditCursor.movePosition(ui.receiveEditCursor.End)
+    ui.RECEIVE_EDIT.setTextCursor(ui.receiveEditCursor)
+    #ui.RECEIVE_EDIT.appendPlainText(serialPort.read())
 
 def fileDialog():
     system_name = platform.system()
