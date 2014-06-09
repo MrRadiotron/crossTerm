@@ -2,6 +2,8 @@
 
 import sys
 import os
+import faulthandler
+
 import platform
 import glob
 import serial
@@ -493,6 +495,7 @@ def main():
 	sys.exit(app.exec_())
 
 if __name__ == '__main__':
+	faulthandler.enable()
 	main()
 
 

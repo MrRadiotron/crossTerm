@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import faulthandler
+#import faulthandler
 import sys, os
 from PySide import QtCore, QtGui, QtUiTools
 from PySide.QtCore import QThread
@@ -497,5 +497,5 @@ def main():
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
-    faulthandler.enable()
+    #faulthandler.enable()
     main()

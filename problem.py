@@ -1,4 +1,4 @@
-import faulthandler
+#import faulthandler
 import sys
 import serial
 import threading
@@ -53,7 +53,7 @@ class KeyPressEater(object):
 def main():
     global serial_port
 
-    faulthandler.enable()
+    #faulthandler.enable()
     
     serial_port = serial_port_class()
     serial_port.connect_port()
