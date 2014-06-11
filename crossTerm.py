@@ -17,8 +17,8 @@ def cleanUp():
     global serial_thread
     if connected:
         connected = False
-        while serial_thread.running:
-            pass
+        #while serial_thread.running:
+        #    pass
         serialPort.close()
     if fRunner.fd != None:
         fRunner.fd.close()
